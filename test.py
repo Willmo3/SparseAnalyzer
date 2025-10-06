@@ -27,23 +27,33 @@ visitor = CountAssignVisitor(env)
 # -- Test functions -- #
 
 def test_report_reads():
+    visitor.reset()
     tree = parse_einsum("E[i] min= A[i,k] + D[k,j] << 1")
     visitor.visit(tree)
-    cost = visitor.report_total_reads()
+    cost = visitor.total_reads()
     assert cost == 48
 
     visitor.reset()
     tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
     visitor.visit(tree)
-    cost = visitor.report_total_reads()
+    cost = visitor.total_reads()
     assert cost == 32
 
     visitor.reset()
     tree = parse_einsum("D[i,j] += A[i,k] * B[k,j]")
     visitor.visit(tree)
-    cost = visitor.report_total_reads()
+    cost = visitor.total_reads()
     assert cost == 48
+
+def test_report_writes():
+    visitor.reset()
+    tree = parse_einsum("E[i] min= A[i,k] + D[k,j] << 1")
+    visitor.visit(tree)
+    cost = visitor.total_writes()
+    assert cost == 2
+    visitor.reset()
 
 # -- Execution -- #
 
 test_report_reads()
+test_report_writes()
