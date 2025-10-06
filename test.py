@@ -51,7 +51,18 @@ def test_report_writes():
     visitor.visit(tree)
     cost = visitor.total_writes()
     assert cost == 2
+
     visitor.reset()
+    tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
+    visitor.visit(tree)
+    cost = visitor.total_writes()
+    assert cost == 8
+
+    visitor.reset()
+    tree = parse_einsum("D[i,j] += A[i,k] * B[k,j]")
+    visitor.visit(tree)
+    cost = visitor.total_writes()
+    assert cost == 8
 
 # -- Execution -- #
 
