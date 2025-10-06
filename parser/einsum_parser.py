@@ -2,7 +2,7 @@ from lark import Lark, Tree
 
 # all credit to Willow Ahrens
 
-from einsum_ast import EinsumExpr, Einsum, Access, Literal, Call
+from parser.einsum_ast import EinsumExpr, Einsum, Access, Literal, Call
 
 lark_parser = Lark("""
     %import common.CNAME

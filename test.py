@@ -1,5 +1,5 @@
-from einsum_analyzer import CountAssignVisitor
-from einsum_parser import parse_einsum
+from visitors.CountOpsVisitor import CountOpsVisitor
+from parser.einsum_parser import parse_einsum
 
 """
 Examples considered:
@@ -22,7 +22,7 @@ env = {
     "k": 3,
     "j": 4,
 }
-visitor = CountAssignVisitor(env)
+visitor = CountOpsVisitor(env)
 
 # -- Test functions -- #
 
