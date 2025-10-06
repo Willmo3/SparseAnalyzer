@@ -30,15 +30,19 @@ class EinsumVisitor(ABC):
 
 class CountAssignVisitor(EinsumVisitor):
     def __init__(self):
-        self.tensor_index_map = dict()
+        self._dims = set()
+        self._tensor_index_map = dict()
 
     def apply_literal(self, node):
         pass
 
     def apply_access(self, node):
-        if node.tns not in self.tensor_index_map:
-            self.tensor_index_map[node.tns] = set()
-        self.tensor_index_map[node.tns].add(tuple(node.idxs))
+        for dim in node.idxs:
+            self._dims.add(dim)
+
+        if node.tns not in self._tensor_index_map:
+            self._tensor_index_map[node.tns] = set()
+        self._tensor_index_map[node.tns].add(tuple(node.idxs))
 
     def apply_einsum(self, node):
         pass
@@ -46,6 +50,12 @@ class CountAssignVisitor(EinsumVisitor):
     def apply_call(self, node):
         pass
 
+    # Post-traversal analysis
+
+    def report_traversals(self):
+        for tns in self._tensor_index_map:
+            print(tns, self._tensor_index_map[tns])
+
     def generate_iter_order(self):
-        for tns in self.tensor_index_map:
-            print(tns, self.tensor_index_map[tns])
+        for dim in self._dims:
+            print(dim)
