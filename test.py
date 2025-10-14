@@ -1,5 +1,6 @@
 from visitors.CountOpsVisitor import CountOpsVisitor
 from parser.einsum_parser import parse_einsum
+from visitors.DataDistributionVisitor import RowDistributionVisitor
 
 """
 Examples considered:
@@ -64,7 +65,15 @@ def test_report_writes():
     cost = visitor.total_writes()
     assert cost == 8
 
-# -- Execution -- #
+def test_ownership_dict():
+    env = {"i": 4, "j": 12}
+    visitor = RowDistributionVisitor(env, 4)
+    visitor.reset()
 
-test_report_reads()
-test_report_writes()
+    tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
+    visitor.visit(tree)
+    print(visitor.ownership_dictionary())
+    print(visitor._total_comms)
+
+# -- Execution -- #
+test_ownership_dict()
