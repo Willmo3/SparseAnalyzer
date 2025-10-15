@@ -18,62 +18,75 @@ E[i] min= A[i,k] + D[k,j] << 1
 # -- Shared State -- #
 
 # Dimensions mapped to their size.
-env = {
+count_env = {
     "i": 2,
     "k": 3,
     "j": 4,
 }
-visitor = CountOpsVisitor(env)
+count_visitor = CountOpsVisitor(count_env)
 
 # -- Test functions -- #
 
 def test_report_reads():
-    visitor.reset()
+    count_visitor.reset()
     tree = parse_einsum("E[i] min= A[i,k] + D[k,j] << 1")
-    visitor.visit(tree)
-    cost = visitor.total_reads()
+    count_visitor.visit(tree)
+    cost = count_visitor.total_reads()
     assert cost == 48
 
-    visitor.reset()
+    count_visitor.reset()
     tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
-    visitor.visit(tree)
-    cost = visitor.total_reads()
+    count_visitor.visit(tree)
+    cost = count_visitor.total_reads()
     assert cost == 32
 
-    visitor.reset()
+    count_visitor.reset()
     tree = parse_einsum("D[i,j] += A[i,k] * B[k,j]")
-    visitor.visit(tree)
-    cost = visitor.total_reads()
+    count_visitor.visit(tree)
+    cost = count_visitor.total_reads()
     assert cost == 48
 
 def test_report_writes():
-    visitor.reset()
+    count_visitor.reset()
     tree = parse_einsum("E[i] min= A[i,k] + D[k,j] << 1")
-    visitor.visit(tree)
-    cost = visitor.total_writes()
+    count_visitor.visit(tree)
+    cost = count_visitor.total_writes()
     assert cost == 2
 
-    visitor.reset()
+    count_visitor.reset()
     tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
-    visitor.visit(tree)
-    cost = visitor.total_writes()
+    count_visitor.visit(tree)
+    cost = count_visitor.total_writes()
     assert cost == 8
 
-    visitor.reset()
+    count_visitor.reset()
     tree = parse_einsum("D[i,j] += A[i,k] * B[k,j]")
-    visitor.visit(tree)
-    cost = visitor.total_writes()
+    count_visitor.visit(tree)
+    cost = count_visitor.total_writes()
     assert cost == 8
 
 def test_ownership_dict():
-    env = {"i": 4, "j": 12}
-    visitor = RowDistributionVisitor(env, 4)
+    env = {"i": 8, "j": 8, "k": 8}
+    visitor = RowDistributionVisitor(env, 8)
     visitor.reset()
 
-    tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
+    tree = parse_einsum("C[i,k] = A[i,j] + B[j,k]")
     visitor.visit(tree)
     print(visitor.ownership_dictionary())
     print(visitor._total_comms)
 
+def generate_report():
+    # Einsum program to multiply a 4x4 matrix w/ 4x4 matrix
+    program = "C[i, k] = A[i, j] * B[j, k]"
+    size = 32
+    env = {"i": size, "j": size, "k": size}
+
+    # Construct analyzer for distribution over two processors.
+    visitor = RowDistributionVisitor(env, 4)
+
+    tree = parse_einsum(program)
+    visitor.visit(tree)
+    visitor.report()
+
 # -- Execution -- #
-test_ownership_dict()
+generate_report()

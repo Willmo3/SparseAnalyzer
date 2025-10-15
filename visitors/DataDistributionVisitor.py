@@ -72,6 +72,10 @@ class RowDistributionVisitor(EinsumVisitor):
                 # Inclusive lower and upper bounds.
                 self._ownership_dictionary[node.tns][i] = range(i * dims_per_node, i * dims_per_node + dims_per_node - 1)
 
-
-    def ownership_dictionary(self):
-        return self._ownership_dictionary
+    def report(self):
+        print("Data distribution report:")
+        print("Dimensions: ", self._env)
+        print("Total comms: ", self._total_comms)
+        print("Rows owned by processors:")
+        for data in self._ownership_dictionary:
+            print(f"{data}: {self._ownership_dictionary[data]}")
