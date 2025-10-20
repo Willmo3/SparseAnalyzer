@@ -1,4 +1,4 @@
-from sparseanalyzer import CountOpsVisitor, parse_einop, RowDistributionVisitor
+from sparseanalyzer import CountOpsVisitor, parse_einop, RowDistributionVisitor, einsum
 
 """
 Examples considered:
@@ -17,9 +17,9 @@ E[i] min= A[i,k] + D[k,j] << 1
 
 # Dimensions mapped to their size.
 count_env = {
-    "i": 2,
-    "k": 3,
-    "j": 4,
+    einsum.Index("i"): 2,
+    einsum.Index("k"): 3,
+    einsum.Index("j"): 4,
 }
 count_visitor = CountOpsVisitor(count_env)
 
@@ -64,7 +64,7 @@ def test_report_writes():
     assert cost == 8
 
 def test_ownership_dict():
-    env = {"i": 8, "j": 8, "k": 8}
+    env = {einsum.Index("i"): 8, einsum.Index("j"): 8, einsum.Index("k"): 8}
     visitor = RowDistributionVisitor(env, 8)
     visitor.reset()
 
@@ -77,7 +77,7 @@ def generate_report():
     # Einsum program to multiply a 4x4 matrix w/ 4x4 matrix
     program = "C[i, k] = A[i, j] * B[j, k]"
     size = 32
-    env = {"i": size, "j": size, "k": size}
+    env = {einsum.Index("i"): size, einsum.Index("j"): size, einsum.Index("k"): size}
 
     # Construct analyzer for distribution over two processors.
     visitor = RowDistributionVisitor(env, 4)

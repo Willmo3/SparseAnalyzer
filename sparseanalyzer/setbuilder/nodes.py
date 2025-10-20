@@ -361,6 +361,8 @@ class SetBuilderPrinterContext(Context):
                 return f"({self(x)} ∧ {self(y)})"
             case Or(x, y):
                 return f"({self(x)} ∨ {self(y)})"
+            case Not(x):
+                return f"¬({self(x)})"
             case IsNonFill(tns, idxs):
                 idx_str = ', '.join(self(idx) for idx in idxs)
                 return f"nonfill({self(tns)}[{idx_str}])"
