@@ -2,7 +2,7 @@ from .nodes import (
     SetBuilderNode,
     SetBuilderExpr,
     Literal,
-    Alias,
+    Access,
     Index,
     Variable,
     CoordSet,
@@ -16,8 +16,9 @@ from .nodes import (
     Intersect,
     SetDiff,
     Dimension,
-    Contain,
+    In,
     Cardinality,
+    Project,
     Plus,
     Exists,
     ForAll,
@@ -26,8 +27,8 @@ from .simplify import simplify
 
 __all__ = [
     "Literal",
-    "Alias",
     "Index",
+    "Access",
     "Variable",
     "CoordSet",
     "LessThan",
@@ -42,6 +43,11 @@ __all__ = [
     "SetBuilderNode",
     "SetBuilderExpr",
     "simplify",
-    "within",
-    "dimension",
+    "Project",
+    "Plus",
+    "In",
+    "Cardinality",
+    "Exists",
+    "ForAll",
+    "Dimension"
 ]

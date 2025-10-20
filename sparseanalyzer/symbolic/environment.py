@@ -104,7 +104,7 @@ class ScopedDict(Generic[T]):
     def __setitem__(self, key: str, value: T) -> None:
         self.set_in_ancestor(self, key, value)
 
-    def __contains__(self, key: str) -> bool:
+    def __In__(self, key: str) -> bool:
         return key in self.bindings or (self.parent is not None and key in self.parent)
 
     def __delitem__(self, key: str) -> None:

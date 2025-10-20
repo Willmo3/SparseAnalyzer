@@ -7,7 +7,7 @@ from inspect import isbuiltin, isclass, isfunction
 from typing import Any, Self
 
 """
-This module contains definitions for common functions that are useful for symbolic
+This module In definitions for common functions that are useful for symbolic
 expression manipulation. Its purpose is to provide a shared interface between various
 symbolic programming in finchlite.
 

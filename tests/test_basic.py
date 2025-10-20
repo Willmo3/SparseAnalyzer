@@ -102,7 +102,7 @@ def test_setbuilder():
 
     expr = sbn.Union(
         sbn.CoordSet((i, j, k), sbn.IsNonFill(A, (i, j, k))),
-        sbn.CoordSet((i, k, j), sbn.And(sbn.IsNonFill(B, (i, k)), sbn.contains(j, sbn.Dimension(j)))),
+        sbn.CoordSet((i, k, j), sbn.And(sbn.IsNonFill(B, (i, k)), sbn.In((j,), sbn.Dimension(j)))),
     )
 
     simplified = sbn.simplify(expr)
@@ -131,23 +131,20 @@ def test_partition():
 
     has_coords = sbn.CoordSet((i, j), sbn.And(
         sbn.IsNonFill(A, (i, j)),
-        sbn.Contain(i, sbn.Access(Pi, (p,))
+        sbn.In((i,), sbn.Access(Pi, (p,))
     )))
 
-    work_coords = sbn.CoordSet((i, j, k), sbn.And(
-        sbn.Contain(i, sbn.Access(Phi, (p,))
-    )))
+    work_coords = sbn.CoordSet((i, j, k), 
+        sbn.In((i,), sbn.Access(Phi, (p,))
+    ))
 
     A_coords = sbn.CoordSet((i, j), sbn.IsNonFill(A, (i, j)))
 
     need_coords = sbn.Intersect(sbn.Project((i, j), work_coords), A_coords)
 
-    need_coords = sbn.CoordSet((i, j), sbn.And(
-        sbn.Exists(k, sbn.Contain(i, sbn.Access(Phi, (p,)))),
-        sbn.IsNonFill(A, (i, j))
-    ))
-
     comm_coords = sbn.SetDiff(need_coords, has_coords)
+
+    expr = comm_coords
 
     simplified = sbn.simplify(expr)
 
@@ -155,3 +152,5 @@ def test_partition():
     print(expr)
     print("Simplified expression:")
     print(simplified)
+
+test_partition()

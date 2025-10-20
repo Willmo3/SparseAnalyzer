@@ -108,6 +108,33 @@ class CoordSet(SetBuilderExpr, SetBuilderTree):
     def children(self):
         return [*self.idxs, self.pred]
 
+@dataclass(eq=True, frozen=True)
+class Project(SetBuilderExpr, SetBuilderTree):
+    """
+    Project
+
+    (idxs...) ← arg
+
+    Attributes:
+        idxs: The indices to project onto.
+        query: The set expression to project.
+    """
+    idxs: tuple[Index, ...]  # (Field('i'), Field('j'))
+    arg: SetBuilderExpr
+
+    @classmethod
+    def from_children(cls, *children: Term) -> Self:
+        # First child is tns, rest are indices
+        if len(children) < 1:
+            raise ValueError("Access expects at least 1 child")
+        idxs = cast(tuple[SetBuilderExpr, ...], children[:-1])
+        arg = cast(SetBuilderExpr, children[-1])
+        return cls(idxs, arg)
+
+    @property
+    def children(self):
+        return [*self.idxs, self.arg]
+
 
 @dataclass(eq=True, frozen=True)
 class Variable(SetBuilderExpr):
@@ -375,6 +402,7 @@ class Exists(SetBuilderExpr, SetBuilderTree):
         return [self.idx, self.body]
 
 
+@dataclass(eq=True, frozen=True)
 class Dimension(SetBuilderExpr, SetBuilderTree):
     """
     Dimension
@@ -390,6 +418,32 @@ class Dimension(SetBuilderExpr, SetBuilderTree):
     @property
     def children(self):
         return [self.idx]
+
+@dataclass(eq=True, frozen=True)
+class In(SetBuilderExpr, SetBuilderTree):
+    """
+    In
+
+    Attributes:
+        idxs: The indices to check for membership.
+        arg: The set expression to check membership in.
+    """
+    
+    idxs: tuple[Index, ...]  # (Field('i'), Field('j'))
+    arg: SetBuilderExpr
+
+    @property
+    def children(self):
+        return [*self.idxs, self.arg]
+
+    @classmethod
+    def from_children(cls, *children: Term) -> Self:
+        # First child is tns, rest are indices
+        if len(children) < 1:
+            raise ValueError("Access expects at least 1 child")
+        idxs = cast(tuple[SetBuilderExpr, ...], children[:-1])
+        arg = cast(SetBuilderExpr, children[-1])
+        return cls(idxs, arg)
 
 @dataclass(eq=True, frozen=True)
 class Cardinality(SetBuilderExpr, SetBuilderTree):
@@ -468,5 +522,17 @@ class SetBuilderPrinterContext(Context):
                 return f"∀ {self(idx)}. ({self(body)})"
             case Exists(idx, body):
                 return f"∃ {self(idx)}. ({self(body)})"
+            case Plus(left, right):
+                return f"({self(left)} + {self(right)})"
+            case Project(idxs, arg):
+                idx_str = ', '.join(self(idx) for idx in idxs)
+                return f"({idx_str}) ← {self(arg)}"
+            case Dimension(idx):
+                return f"dim({self(idx)})"
+            case In(idxs, arg):
+                idx_str = ', '.join(self(idx) for idx in idxs)
+                return f"({idx_str}) ∈ {self(arg)}"
+            case Cardinality(set_expr):
+                return f"|{self(set_expr)}|"
             case _:
                 raise ValueError(f"Unknown expression type: {type(prgm)}")

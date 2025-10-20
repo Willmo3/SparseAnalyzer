@@ -219,7 +219,7 @@ class Plan(EinsumTree):
     """
     Plan
 
-    A plan that contains einsum operations.
+    A plan that In einsum operations.
     Basically a list of einsums and some return values.
     """
 

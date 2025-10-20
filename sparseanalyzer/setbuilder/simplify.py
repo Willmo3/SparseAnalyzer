@@ -31,6 +31,14 @@ def simplify_node(expr: SetBuilderNode):
         case sbn.Union(sbn.CoordSet(idxs1, pred1), sbn.CoordSet(idxs2, pred2)) if len(idxs1) == len(idxs2):
             pred3 = renamer(idxs1, idxs2, pred2)
             return sbn.CoordSet(idxs1, sbn.Or(pred1, pred3))
+        case sbn.Project(idxs1, sbn.CoordSet(idxs2, pred)):
+            idxs2and1 = [idx for idx in idxs2 if idx in idxs1]
+            idxs1and2 = [idx for idx in idxs1 if idx in idxs2]
+            pred2 = renamer(idxs1and2, idxs2and1, pred)
+            for idx in idxs2:
+                if idx not in idxs1:
+                    pred2 = sbn.Exists(idx, pred2)
+            return sbn.CoordSet(idxs1, pred2)
         case _:
             return expr
 
