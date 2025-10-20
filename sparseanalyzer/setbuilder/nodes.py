@@ -48,9 +48,6 @@ class SetBuilderTree(SetBuilderNode, TermTree):
 class SetBuilderExpr(SetBuilderNode, ABC):
     pass
 
-class SetBuilderSet(SetBuilderNode, ABC):
-    pass
-
 @dataclass(eq=True, frozen=True)
 class Literal(SetBuilderExpr):
     """
@@ -85,22 +82,7 @@ class Index(SetBuilderExpr):
 
 
 @dataclass(eq=True, frozen=True)
-class Alias(SetBuilderExpr):
-    """
-    Represents a  AST expression for an index named `name`.
-
-    Attributes:
-        name: The name of the index.
-    """
-
-    name: str
-
-    def get_idxs(self) -> set["Index"]:
-        return set()
-
-
-@dataclass(eq=True, frozen=True)
-class CoordSet(SetBuilderSet, SetBuilderTree):
+class CoordSet(SetBuilderExpr, SetBuilderTree):
     """
     CoordSet
 
@@ -118,9 +100,9 @@ class CoordSet(SetBuilderSet, SetBuilderTree):
         # First child is tns, rest are indices
         if len(children) < 1:
             raise ValueError("Access expects at least 1 child")
-        idxs = cast(tuple[SetBuilderExpr, ...], children[:-2])
+        idxs = cast(tuple[SetBuilderExpr, ...], children[:-1])
         pred = cast(SetBuilderExpr, children[-1])
-        return cls(tuple(idxs), pred)
+        return cls(idxs, pred)
 
     @property
     def children(self):
@@ -264,7 +246,36 @@ class IsNonFill(SetBuilderExpr, SetBuilderTree):
         return [self.tns, *self.idxs]
 
 @dataclass(eq=True, frozen=True)
-class Union(SetBuilderSet, SetBuilderTree):
+class Access(SetBuilderExpr, SetBuilderTree):
+    """
+    Access
+
+    Return the value of `tns[idxs]`
+
+    Attributes:
+        tns: The tensor to access.
+        idxs: The indices at which to access the tensor.
+    """
+
+    tns: SetBuilderExpr
+    idxs: tuple[SetBuilderExpr, ...]  # (Field('i'), Field('j'))
+    # Children: None (leaf)
+
+    @classmethod
+    def from_children(cls, *children: Term) -> Self:
+        # First child is tns, rest are indices
+        if len(children) < 1:
+            raise ValueError("Access expects at least 1 child")
+        tns = cast(SetBuilderExpr, children[0])
+        idxs = cast(tuple[SetBuilderExpr, ...], children[1:])
+        return cls(tns, tuple(idxs))
+
+    @property
+    def children(self):
+        return [self.tns, *self.idxs]
+
+@dataclass(eq=True, frozen=True)
+class Union(SetBuilderExpr, SetBuilderTree):
     """
     Union
 
@@ -281,9 +292,9 @@ class Union(SetBuilderSet, SetBuilderTree):
         return [self.left, self.right]
 
 @dataclass(eq=True, frozen=True)
-class Intersection(SetBuilderSet, SetBuilderTree):
+class Intersect(SetBuilderExpr, SetBuilderTree):
     """
-    Intersection
+    Intersect
 
     Attributes:
         left: The left set.
@@ -298,7 +309,7 @@ class Intersection(SetBuilderSet, SetBuilderTree):
         return [self.left, self.right]
 
 @dataclass(eq=True, frozen=True)
-class SetDiff(SetBuilderSet, SetBuilderTree):
+class SetDiff(SetBuilderExpr, SetBuilderTree):
     """
     SetDiff
 
@@ -314,6 +325,86 @@ class SetDiff(SetBuilderSet, SetBuilderTree):
     def children(self):
         return [self.left, self.right]
 
+class ForAll(SetBuilderExpr, SetBuilderTree):
+    """
+    ForAll
+
+    Attributes:
+        idx: The index to quantify over.
+        body: The body of the quantifier.
+    """
+
+    idx: Index
+    body: SetBuilderExpr
+
+    @property
+    def children(self):
+        return [self.idx, self.body]
+
+class Plus(SetBuilderExpr, SetBuilderTree):
+    """
+    Plus
+
+    Attributes:
+        left: The left expression.
+        right: The right expression.
+    """
+
+    left: SetBuilderExpr
+    right: SetBuilderExpr
+
+    @property
+    def children(self):
+        return [self.left, self.right]
+
+@dataclass(eq=True, frozen=True)
+class Exists(SetBuilderExpr, SetBuilderTree):
+    """
+    Exists
+
+    Attributes:
+        idx: The index to quantify over.
+        body: The body of the quantifier.
+    """
+    
+    idx: Index
+    body: SetBuilderExpr
+
+    @property
+    def children(self):
+        return [self.idx, self.body]
+
+
+class Dimension(SetBuilderExpr, SetBuilderTree):
+    """
+    Dimension
+
+    Represents the range of feasible values for an index.
+
+    Attributes:
+        idx: The index whose dimension to return.
+    """
+    
+    idx: Any
+
+    @property
+    def children(self):
+        return [self.idx]
+
+@dataclass(eq=True, frozen=True)
+class Cardinality(SetBuilderExpr, SetBuilderTree):
+    """
+    Cardinality
+
+    Attributes:
+        set_expr: The set expression to compute the cardinality of.
+    """
+    
+    set_expr: SetBuilderExpr
+
+    @property
+    def children(self):
+        return [self.set_expr]
 
 class SetBuilderPrinterContext(Context):
     def __init__(self, tab="    ", indent=0):
@@ -344,8 +435,6 @@ class SetBuilderPrinterContext(Context):
         match prgm:
             case Literal(val):
                 return str(val)
-            case Alias(name):
-                return str(name)
             case Index(name):
                 return str(name)
             case Variable(name):
@@ -365,12 +454,19 @@ class SetBuilderPrinterContext(Context):
                 return f"¬({self(x)})"
             case IsNonFill(tns, idxs):
                 idx_str = ', '.join(self(idx) for idx in idxs)
-                return f"nonfill({self(tns)}[{idx_str}])"
+                return f"{self(tns)}[[{idx_str}]]"
+            case Access(tns, idxs):
+                idx_str = ', '.join(self(idx) for idx in idxs)
+                return f"{self(tns)}[{idx_str}]"
             case Union(left, right):
                 return f"({self(left)} ∪ {self(right)})"
-            case Intersection(left, right):
+            case Intersect(left, right):
                 return f"({self(left)} ∩ {self(right)})"
             case SetDiff(left, right):
                 return f"({self(left)} \\ {self(right)})"
+            case ForAll(idx, body):
+                return f"∀ {self(idx)}. ({self(body)})"
+            case Exists(idx, body):
+                return f"∃ {self(idx)}. ({self(body)})"
             case _:
                 raise ValueError(f"Unknown expression type: {type(prgm)}")

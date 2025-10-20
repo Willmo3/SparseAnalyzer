@@ -1,7 +1,6 @@
 from .nodes import (
     SetBuilderNode,
     SetBuilderExpr,
-    SetBuilderSet,
     Literal,
     Alias,
     Index,
@@ -14,9 +13,16 @@ from .nodes import (
     Not,
     IsNonFill,
     Union,
-    Intersection,
+    Intersect,
     SetDiff,
+    Dimension,
+    Contain,
+    Cardinality,
+    Plus,
+    Exists,
+    ForAll,
 )
+from .simplify import simplify
 
 __all__ = [
     "Literal",
@@ -31,9 +37,11 @@ __all__ = [
     "Not",
     "IsNonFill",
     "Union",
-    "Intersection",
+    "Intersect",
     "SetDiff",
     "SetBuilderNode",
     "SetBuilderExpr",
-    "SetBuilderSet",
+    "simplify",
+    "within",
+    "dimension",
 ]

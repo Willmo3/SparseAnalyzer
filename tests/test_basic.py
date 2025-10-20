@@ -1,4 +1,5 @@
 from sparseanalyzer import CountOpsVisitor, parse_einop, RowDistributionVisitor, einsum
+from sparseanalyzer import setbuilder as sbn
 
 """
 Examples considered:
@@ -88,3 +89,69 @@ def generate_report():
 
 # -- Execution -- #
 generate_report()
+
+def test_setbuilder():
+    A = sbn.Variable("A")
+    B = sbn.Variable("B")
+    i = sbn.Index("i")
+    j = sbn.Index("j")
+    k = sbn.Index("k")
+    I = sbn.Variable("I")
+    J = sbn.Variable("J")
+    K = sbn.Variable("K")
+
+    expr = sbn.Union(
+        sbn.CoordSet((i, j, k), sbn.IsNonFill(A, (i, j, k))),
+        sbn.CoordSet((i, k, j), sbn.And(sbn.IsNonFill(B, (i, k)), sbn.contains(j, sbn.Dimension(j)))),
+    )
+
+    simplified = sbn.simplify(expr)
+
+    print("Original expression:")
+    print(expr)
+    print("Simplified expression:")
+    print(simplified)
+
+test_setbuilder()
+
+def test_partition():
+    A = sbn.Variable("A")
+    B = sbn.Variable("B")
+    Pi = sbn.Variable("Π")
+    Phi = sbn.Variable("Φ")
+    i = sbn.Index("i")
+    j = sbn.Index("j")
+    k = sbn.Index("k")
+    I = sbn.Variable("I")
+    J = sbn.Variable("J")
+    K = sbn.Variable("K")
+    p = sbn.Variable("p")
+
+    #C[i, j] = A[i, k] * B[k, j] where A is partitioned with Π over i, computation is partitioned with Φ over i
+
+    has_coords = sbn.CoordSet((i, j), sbn.And(
+        sbn.IsNonFill(A, (i, j)),
+        sbn.Contain(i, sbn.Access(Pi, (p,))
+    )))
+
+    work_coords = sbn.CoordSet((i, j, k), sbn.And(
+        sbn.Contain(i, sbn.Access(Phi, (p,))
+    )))
+
+    A_coords = sbn.CoordSet((i, j), sbn.IsNonFill(A, (i, j)))
+
+    need_coords = sbn.Intersect(sbn.Project((i, j), work_coords), A_coords)
+
+    need_coords = sbn.CoordSet((i, j), sbn.And(
+        sbn.Exists(k, sbn.Contain(i, sbn.Access(Phi, (p,)))),
+        sbn.IsNonFill(A, (i, j))
+    ))
+
+    comm_coords = sbn.SetDiff(need_coords, has_coords)
+
+    simplified = sbn.simplify(expr)
+
+    print("Original expression:")
+    print(expr)
+    print("Simplified expression:")
+    print(simplified)
