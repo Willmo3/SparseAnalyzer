@@ -1,6 +1,4 @@
-from visitors.CountOpsVisitor import CountOpsVisitor
-from parser.einsum_parser import parse_einsum
-from visitors.DataDistributionVisitor import RowDistributionVisitor
+from sparseanalyzer import CountOpsVisitor, parse_einop, RowDistributionVisitor
 
 """
 Examples considered:
@@ -29,38 +27,38 @@ count_visitor = CountOpsVisitor(count_env)
 
 def test_report_reads():
     count_visitor.reset()
-    tree = parse_einsum("E[i] min= A[i,k] + D[k,j] << 1")
+    tree = parse_einop("E[i] min= A[i,k] + D[k,j] << 1")
     count_visitor.visit(tree)
     cost = count_visitor.total_reads()
     assert cost == 48
 
     count_visitor.reset()
-    tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
+    tree = parse_einop("C[i,j] = A[i,j] + B[j,i]")
     count_visitor.visit(tree)
     cost = count_visitor.total_reads()
     assert cost == 32
 
     count_visitor.reset()
-    tree = parse_einsum("D[i,j] += A[i,k] * B[k,j]")
+    tree = parse_einop("D[i,j] += A[i,k] * B[k,j]")
     count_visitor.visit(tree)
     cost = count_visitor.total_reads()
     assert cost == 48
 
 def test_report_writes():
     count_visitor.reset()
-    tree = parse_einsum("E[i] min= A[i,k] + D[k,j] << 1")
+    tree = parse_einop("E[i] min= A[i,k] + D[k,j] << 1")
     count_visitor.visit(tree)
     cost = count_visitor.total_writes()
     assert cost == 2
 
     count_visitor.reset()
-    tree = parse_einsum("C[i,j] = A[i,j] + B[j,i]")
+    tree = parse_einop("C[i,j] = A[i,j] + B[j,i]")
     count_visitor.visit(tree)
     cost = count_visitor.total_writes()
     assert cost == 8
 
     count_visitor.reset()
-    tree = parse_einsum("D[i,j] += A[i,k] * B[k,j]")
+    tree = parse_einop("D[i,j] += A[i,k] * B[k,j]")
     count_visitor.visit(tree)
     cost = count_visitor.total_writes()
     assert cost == 8
@@ -70,7 +68,7 @@ def test_ownership_dict():
     visitor = RowDistributionVisitor(env, 8)
     visitor.reset()
 
-    tree = parse_einsum("C[i,k] = A[i,j] + B[j,k]")
+    tree = parse_einop("C[i,k] = A[i,j] + B[j,k]")
     visitor.visit(tree)
     print(visitor.ownership_dictionary())
     print(visitor._total_comms)
@@ -84,7 +82,7 @@ def generate_report():
     # Construct analyzer for distribution over two processors.
     visitor = RowDistributionVisitor(env, 4)
 
-    tree = parse_einsum(program)
+    tree = parse_einop(program)
     visitor.visit(tree)
     visitor.report()
 

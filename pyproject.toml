@@ -1,0 +1,20 @@
+[project]
+name = "sparseanalyzer"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Willow Ahrens",email = "willow@csail.mit.edu"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "lark (>=1.3.0,<2.0.0)",
+    "numpy (>=2.3.4,<3.0.0)",
+    "scipy (>=1.16.2,<2.0.0)",
+    "sparse (>=0.17.0,<0.18.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
