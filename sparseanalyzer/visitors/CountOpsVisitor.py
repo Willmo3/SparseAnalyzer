@@ -1,4 +1,4 @@
-from visitors.EinsumVisitor import EinsumVisitor
+from .EinsumVisitor import EinsumVisitor
 
 class CountOpsVisitor(EinsumVisitor):
     """
@@ -20,6 +20,10 @@ class CountOpsVisitor(EinsumVisitor):
     # Visitor methods
 
     def apply_literal(self, node):
+        pass
+    def apply_index(self, node):
+        pass
+    def apply_alias(self, node):
         pass
     def apply_call(self, node):
         pass

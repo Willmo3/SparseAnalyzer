@@ -1,4 +1,4 @@
-from visitors.EinsumVisitor import EinsumVisitor
+from .EinsumVisitor import EinsumVisitor
 
 class RowDistributionVisitor(EinsumVisitor):
     """
@@ -22,6 +22,12 @@ class RowDistributionVisitor(EinsumVisitor):
         self.__init__(self._env, self._k)
 
     def apply_literal(self, node):
+        pass
+
+    def apply_index(self, node):
+        pass
+
+    def apply_alias(self, node):
         pass
 
     def apply_einsum(self, node):
