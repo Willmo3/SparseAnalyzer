@@ -65,7 +65,6 @@ def test_report_writes():
     cost = count_visitor.total_writes()
     assert cost == 8
 
-@pytest.mark.skip(reason="it seems that the visitor doesn't have a member ownership_dictionary")
 def test_ownership_dict():
     env = {einsum.Index("i"): 8, einsum.Index("j"): 8, einsum.Index("k"): 8}
     visitor = RowDistributionVisitor(env, 8)
@@ -73,8 +72,8 @@ def test_ownership_dict():
 
     tree = parse_einop("C[i,k] = A[i,j] + B[j,k]")
     visitor.visit(tree)
-    print(visitor.ownership_dictionary())
-    print(visitor._total_comms)
+    print(visitor.ownership_dictionary)
+    print(visitor.total_comms)
 
 def generate_report():
     # Einsum program to multiply a 4x4 matrix w/ 4x4 matrix

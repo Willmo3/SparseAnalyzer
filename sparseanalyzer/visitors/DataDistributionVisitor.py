@@ -4,8 +4,6 @@ class RowDistributionVisitor(EinsumVisitor):
     """
     Track the no of data transfers in a distributed einsum application.
     For now, we assume that num nodes = num dims in split.
-
-
     """
     def __init__(self, env, k):
         self._env = env
@@ -21,18 +19,18 @@ class RowDistributionVisitor(EinsumVisitor):
     def reset(self):
         self.__init__(self._env, self._k)
 
-    def apply_literal(self, node):
-        pass
-
-    def apply_index(self, node):
-        pass
-
-    def apply_alias(self, node):
-        pass
-
-    def apply_einsum(self, node):
-        # For now, not marking writes. This will change later.
-        pass
+    """
+    Useful properties to reason about
+    """
+    @property
+    def total_comms(self):
+        return self._total_comms
+    @property
+    def ownership_dictionary(self):
+        return self._ownership_dictionary
+    @property
+    def split_dims(self):
+        return self._split_dims
 
     def apply_call(self, node):
         # For now, only apply to binary functions.
@@ -77,6 +75,15 @@ class RowDistributionVisitor(EinsumVisitor):
             for i in range(0, self._k):
                 # Inclusive lower and upper bounds.
                 self._ownership_dictionary[node.tns][i] = range(i * dims_per_node, i * dims_per_node + dims_per_node - 1)
+
+    def apply_literal(self, node):
+        pass
+    def apply_index(self, node):
+        pass
+    def apply_alias(self, node):
+        pass
+    def apply_einsum(self, node):
+        pass
 
     def report(self):
         print("Data distribution report:")
