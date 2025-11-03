@@ -1,6 +1,6 @@
 from .visitors.CountOpsVisitor import CountOpsVisitor
 from .einsum import parse_einop
-from .visitors.DataDistributionVisitor import RowDistributionVisitor
+from .visitors.ConcreteDistributionVisitor import RowDistributionVisitor
 from . import einsum
 from . import setbuilder
 
