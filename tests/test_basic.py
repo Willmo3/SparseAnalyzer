@@ -46,6 +46,8 @@ def test_report_reads():
     cost = count_visitor.total_reads()
     assert cost == 48
 
+test_report_reads()
+
 def test_report_writes():
     count_visitor.reset()
     tree = parse_einop("E[i] min= A[i,k] + D[k,j] << 1")
@@ -65,6 +67,8 @@ def test_report_writes():
     cost = count_visitor.total_writes()
     assert cost == 8
 
+test_report_writes()
+
 def test_ownership_dict():
     env = {einsum.Index("i"): 8, einsum.Index("j"): 8, einsum.Index("k"): 8}
     visitor = RowDistributionVisitor(env, 8)
@@ -74,6 +78,8 @@ def test_ownership_dict():
     visitor.visit(tree)
     print(visitor.ownership_dictionary)
     print(visitor.total_comms)
+
+test_ownership_dict()
 
 def generate_report():
     # Einsum program to multiply a 4x4 matrix w/ 4x4 matrix
@@ -90,68 +96,3 @@ def generate_report():
 
 # -- Execution -- #
 generate_report()
-
-def test_setbuilder():
-    A = sbn.Variable("A")
-    B = sbn.Variable("B")
-    i = sbn.Index("i")
-    j = sbn.Index("j")
-    k = sbn.Index("k")
-    I = sbn.Variable("I")
-    J = sbn.Variable("J")
-    K = sbn.Variable("K")
-
-    expr = sbn.Union(
-        sbn.CoordSet((i, j, k), sbn.IsNonFill(A, (i, j, k))),
-        sbn.CoordSet((i, k, j), sbn.And(sbn.IsNonFill(B, (i, k)), sbn.In((j,), sbn.Dimension(j)))),
-    )
-
-    simplified = sbn.simplify(expr)
-
-    print("Original expression:")
-    print(expr)
-    print("Simplified expression:")
-    print(simplified)
-
-test_setbuilder()
-
-def test_partition():
-    A = sbn.Variable("A")
-    B = sbn.Variable("B")
-    Pi = sbn.Variable("Π")
-    Phi = sbn.Variable("Φ")
-    i = sbn.Index("i")
-    j = sbn.Index("j")
-    k = sbn.Index("k")
-    I = sbn.Variable("I")
-    J = sbn.Variable("J")
-    K = sbn.Variable("K")
-    p = sbn.Variable("p")
-
-    #C[i, j] = A[i, k] * B[k, j] where A is partitioned with Π over i, computation is partitioned with Φ over i
-
-    has_coords = sbn.CoordSet((i, j), sbn.And(
-        sbn.IsNonFill(A, (i, j)),
-        sbn.In((i,), sbn.Access(Pi, (p,))
-    )))
-
-    work_coords = sbn.CoordSet((i, j, k), 
-        sbn.In((i,), sbn.Access(Phi, (p,))
-    ))
-
-    A_coords = sbn.CoordSet((i, j), sbn.IsNonFill(A, (i, j)))
-
-    need_coords = sbn.Intersect(sbn.Project((i, j), work_coords), A_coords)
-
-    comm_coords = sbn.SetDiff(need_coords, has_coords)
-
-    expr = comm_coords
-
-    simplified = sbn.simplify(expr)
-
-    print("Original expression:")
-    print(expr)
-    print("Simplified expression:")
-    print(simplified)
-
-test_partition()
