@@ -81,10 +81,3 @@ class CountOpsVisitor(EinsumVisitor):
             cost = cost * self._env[dim]
 
         return cost
-
-    # Data transfer analysis
-
-
-
-
-        pass
