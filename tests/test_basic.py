@@ -46,7 +46,7 @@ def test_report_reads():
     cost = count_visitor.total_reads()
     assert cost == 48
 
-test_report_reads()
+# test_report_reads()
 
 def test_report_writes():
     count_visitor.reset()
@@ -67,28 +67,29 @@ def test_report_writes():
     cost = count_visitor.total_writes()
     assert cost == 8
 
-test_report_writes()
+# test_report_writes()
 
 def test_ownership_dict():
     env = {einsum.Index("i"): 8, einsum.Index("j"): 8, einsum.Index("k"): 8}
     visitor = RowDistributionVisitor(env, 8)
     visitor.reset()
 
-    tree = parse_einop("C[i,k] = A[i,j] + B[j,k]")
+    tree = parse_einop("C[i,k] = A[i,j] + B[k,]")
     visitor.visit(tree)
     print(visitor.ownership_dictionary)
     print(visitor.total_comms)
 
-test_ownership_dict()
+# test_ownership_dict()
 
 def generate_report():
-    # Einsum program to multiply a 4x4 matrix w/ 4x4 matrix
-    program = "C[i, k] = A[i, j] * B[j, k]"
-    size = 32
-    env = {einsum.Index("i"): size, einsum.Index("j"): size, einsum.Index("k"): size}
+    # Einsum program to multiply 4x4 matrices
+    program = "C[i, j] += A[i, k] * B[k, j]"
+    env = {einsum.Index("i"): 4,
+           einsum.Index("j"): 4,
+           einsum.Index("k"): 4}
 
-    # Construct analyzer for distribution over two processors.
-    visitor = RowDistributionVisitor(env, 4)
+    # Construct analyzer for k=2 partition
+    visitor = RowDistributionVisitor(env, 2)
 
     tree = parse_einop(program)
     visitor.visit(tree)
